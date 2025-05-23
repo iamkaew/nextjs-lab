@@ -1,3 +1,3 @@
 export default function LoadingNews() {
-  return <p>กำลังโหลดข่าว โปรดรอสักครู่...</p>;
+  return <p>Loading latest news...</p>;
 }
