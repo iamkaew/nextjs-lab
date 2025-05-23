@@ -35,7 +35,7 @@ export async function getAvailableNewsYears() {
   return years;
 }
 
-export function getAvailableNewsMonths(year) {
+export async function getAvailableNewsMonths(year) {
   return db
     .prepare(
       "SELECT DISTINCT strftime('%m', date) as month FROM news WHERE strftime('%Y', date) = ?"
@@ -66,4 +66,40 @@ export async function getNewsForYearAndMonth(year, month) {
   await new Promise((resolve) => setTimeout(resolve, 2000));
 
   return news;
+}
+
+export async function addNews(news, image) {
+  const { slug, title, content, date } = news;
+  const insert = db.prepare('INSERT INTO news (slug, title, content, date, image) VALUES (?, ?, ?, ?, ?)');
+  const result = insert.run(slug, title, content, date, '');
+  const id = result.lastInsertRowid;
+  const imageFile = `news-${id}.${image.name.split('.').pop()}`;
+
+  if (image) {
+    await fs.writeFile(`/images/news/${imageFile}`, Buffer.from(await image.arrayBuffer()));
+    db.prepare('UPDATE news SET image = ? WHERE id = ?').run(imageFile, id);
+  }
+
+  return { id, slug, title, content, date, image: imageFile };
+}
+
+export async function updateNews(news, image) {
+  const { id, slug, title, content, date } = news;
+  const imageFile = `news-${id}.${image.name.split('.').pop()}`;
+
+  if (image) {
+    await fs.writeFile(`/images/news/${imageFile}`, Buffer.from(await image.arrayBuffer()));
+  }
+
+  db.prepare(
+    'UPDATE news SET slug = ?, title = ?, content = ?, date = ?, image = ? WHERE id = ?'
+  ).run(slug, title, content, date, imageFile, id);
+
+  return { ...news, image: imageFile };
+}
+
+export async function deleteNews(id) {
+  const imageFile = db.prepare('SELECT image FROM news WHERE id = ?').get(id);
+  db.prepare('DELETE FROM news WHERE id = ?').run(id);
+  await fs.unlink(`/images/news/${imageFile}`).catch(() => {});
 }

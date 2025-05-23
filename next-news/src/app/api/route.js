@@ -1,27 +1,33 @@
-export function GET(request) {
-  console.log('GET request received:', request.method);
-  return new Response('Hello from GET!');
+export const runtime = 'nodejs';
+
+import { updateNews, deleteNews } from '@/lib/news';
+
+export async function PUT(req) {
+  try {
+    const form = await req.formData();
+    const news = {
+      id: form.get('id'),
+      slug: form.get('slug'),
+      title: form.get('title'),
+      content: form.get('content'),
+      date: form.get('date'),
+    };
+    const file = form.get('image');
+
+    const result = await updateNews(news, file);
+    return Response.json(result);
+  } catch (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
 }
 
-export async function POST(request) {
-  const body = await request.json();
-  console.log('POST data:', body);
-  return Response.json({ message: 'Data received', data: body });
-}
-
-export async function PUT(request) {
-  const body = await request.json();
-  console.log('PUT data:', body);
-  return Response.json({ message: 'Data updated', data: body });
-}
-
-export async function PATCH(request) {
-  const body = await request.json();
-  console.log('PATCH data:', body);
-  return Response.json({ message: 'Data patched', data: body });
-}
-
-export function DELETE(request) {
-  console.log('DELETE request received');
-  return new Response(null, { status: 204 });
+export async function DELETE(req) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    await deleteNews(id);
+    return new Response(null, { status: 204 });
+  } catch (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
 }

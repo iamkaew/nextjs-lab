@@ -8,7 +8,7 @@ export default async function FilterHeader({ year, month }) {
   }
 
   if (month) {
-    const availableMonths = getAvailableNewsMonths(year);
+    const availableMonths = await getAvailableNewsMonths(year);
     if (!availableMonths.includes(month)) {
       throw new Error('Invalid month selected');
     }
@@ -24,7 +24,7 @@ export default async function FilterHeader({ year, month }) {
     }));
   } else if (year && !month) {
     // เลือกปีแล้ว → แสดงลิงก์รายเดือนของปีนั้น
-    links = getAvailableNewsMonths(year).map(month => ({
+    links = (await getAvailableNewsMonths(year)).map(month => ({
       label: `เดือน ${month}`,
       href: `/archive/${year}/${month}`,
     }));
